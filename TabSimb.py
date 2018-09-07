@@ -1,0 +1,1 @@
+# Tabela de simbolos + novos simbolosaa
