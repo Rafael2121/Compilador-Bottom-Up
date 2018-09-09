@@ -1,5 +1,7 @@
 # Programa destinado a ser o LEXER do portugolo
 
+from Compiladores import tag,token,Tokens,TabSimb
+
 # INTERFACE PRINCIPAL
 
 
@@ -67,19 +69,19 @@ class LEXER:
 					pass
 				elif caractere == "<":
 					lexema += (str)caractere
+					estado = 5
 					# muda de estado
 					pass
 				elif caractere == ">":
 					lexema += (str)caractere
+					estado = 11
 					# muda de estado
 					pass
 				elif caractere == "+":
-					lexema += (str)caractere
-					# muda de estado
+					lista_Tokens.add(Token(null, "+", n_linha, m_coluna))
 					pass
 				elif caractere == "-":
-					lexema += (str)caractere
-					# muda de estado
+					lista_Tokens.add(Token(null, "-", n_linha, m_coluna))
 					pass
 				elif caractere == "*":
 					lista_Tokens.add(Token(null, "*", n_linha, m_coluna))
@@ -87,25 +89,30 @@ class LEXER:
 					pass
 				elif caractere == "/":
 					lexema += (str)caractere
+					estado = 23
 					#muda de estado
 					pass
 				elif caractere.isalpha():
 					lexema += caractere
+					estado = 18
 					#muda de estado
 				elif caractere.isdigit():
 					lexema += caractere
+					estado = 14
 					#muda de estado
 				elif caractere == '"':
 					lexema += caractere
+					estado = 28
 					#muda de estado
+
 			# Estado "<"
-			elif estado = :
+			elif estado == 5:
 				if caractere == "=":
 					lista_Tokens.add(Token(null, "<=", n_linha, m_coluna))
 					#return
 					pass
 				elif caractere == "-":
-
+					estado = 7
 					#muda de estado
 					pass
 				elif caractere == ">":
@@ -116,8 +123,17 @@ class LEXER:
 					lista_Tokens.add(Token(null, "<", n_linha, m_coluna))
 					#return
 					pass
+
 			# Estado ">"
-			elif estado = :
+			elif estado == 7:
+				if caractere == "-":
+					lista_Tokens.add(Token(null, "<--", n_linha, m_coluna))
+					pass
+				else:
+					#retorna um erro
+					pass
+
+			elif estado == 11:
 				if caractere == "=":
 					lista_Tokens.add(Token(null, ">=", n_linha, m_coluna))
 					#return
@@ -127,106 +143,81 @@ class LEXER:
 					lista_Tokens.add(Token(null, ">", n_linha, m_coluna))
 					#return
 					pass
-			# Estado +
-			elif estado = :
-				# Letra ou Digito
-				if caractere:
-					#return
-					pass
-				# Outro
-				else:
-					#return
-					pass
-			# Estado -
-			elif estado = :
-				# Letra ou Digito
-				if caractere:
-					#return
-					pass
-				# Outro
-				else:
-					#return
-					pass
+
 			# Estado /
-			elif estado = :
+			elif estado == 23:
 				if caractere == "*":
+					estado = 26
 					# Muda de estado
 					pass
 				elif caractere == "/":
+					estado = 25
 					# Muda de estado
 					pass
 				else:
 					# Volta 1 caractere
-
 					lista_Tokens.add(Token(null, "/", n_linha, m_coluna))
 					# return
 					pass
-			pass
+
+			elif estado == 26:
+				if caractere == "*":
+					estado = 27
+					#muda de estado
+
+			elif estado == 25:
+				if caractere == "/n":
+					estado = 1
+
+			elif estado == 27:
+				if caractere == "*":
+					pass
+				elif caractere == "/":
+					estado = 1
+				else:
+					estado = 26
+
 			# Estado de letra
-			elif estado = :
+			elif estado == 18:
 				if caractere.isalpha() or caractere.isdigit():
 					# enquanto encontrar 
 					lexema += caractere
+
 				else:					
 					# caractere é uma palavra
 					# Será feita uma consulta na tabela se esta palavra é reservada
-					lista_Tokens.add(Token(null,lexema,n_linha,m_coluna))
-					lexema = ""					
-			# Estado de numero
-			elif estado = :
-				if caractere.isdigit():
-					lexema += caractere
-					
-				elif caractere == "."::
-					# muda  de estado
-					lexema += caractere					
-				else:
+					# volta 1 caractera
 					lista_Tokens.add(Token(null,lexema,n_linha,m_coluna))
 					lexema = ""
 
-			elif estado = :
+			# Estado de numero
+			elif estado == 14:
+				if caractere.isdigit():
+					lexema += caractere
+				elif caractere == ".":
+					# muda  de estado
+					estado = 16
+					lexema += caractere					
+				else:
+					# volta 1 estado
+					lista_Tokens.add(Token(null,lexema,n_linha,m_coluna))
+					lexema = ""
+
+			elif estado == 16:
 				if caractere.isdigit():
 					lexema += caractere
 				else:
+					# volta 1 caractere
 					lista_Tokens.add(Token(null,lexema,n_linha,m_coluna))
 					lexema = ""
 
 			# Estado de "
-			elif estado = :
+			elif estado == 28:
 				if caractere == '"':
 					lista_Tokens.add(Token(null,lexema,n_linha,m_coluna))
 					lexema = ""
 				else:
 					lexema += caractere
-			
-
-
-
-
-			# Estado de comentário //
-			elif estado = :				
-				if caractere == "\n" or caractere == "\r":
-					# Pula de linha
-					estado = 1				
-			elif estado = :
-				# estado de comentário
-				if caractere == "*":
-
-					# Muda de estado
-					pass
-			
-			elif estado = :
-				if caractere == "*":
-
-					pass
-				elif caractere == "/"
-					# Fim do comentário
-					estado = 1
-					pass
-				else:
-					#Volta de estado
-
-					pass
 
 			else:
 
