@@ -13,184 +13,262 @@ class LEXER:
     def __init__(self):
         self.n_linha = 0
         self.m_coluna = 0
-        self.cursor = 0  # armazena ultimo char
-        self.tabelaSimbolos = tag
+        self.estado = 1
+        self.lexema = ""  # Definição da variável de acumulação de caracteres para a formação do TOKEN composto
+        self.cursor = ""
+        self.tabelaSimbolos = ['programa', 'algoritmo', 'fim', 'subrotina', 'declare', 'logico', 'numerico', 'literal', 'se', 'enquanto', 'senao', 'leia',
+                     'repita', 'ate', 'verdadeira', 'falso', 'ou', 'e', 'nao']
         self.lista_Tokens = []
+        self.is_panico = False
+        self.lista_erros = []
+
+    def get_lista_tokens(self):
+        return self.lista_Tokens
 
     def lexermain(self):
+        """
+            Este módulo do programa tem o objetivo de extrair  os tokens do arquivo  --> LEXER      ###
 
-        ref_arquivo = open("C:/Users/1511 FOX/Documents/lexer_exemplo/HelloJavinha.jvn", 'r')
+            Este módulo ainda precisa de uma análise em busca de compactar o codigo, que ainda é um pouco confuso.
+            Infelizmente, à um problema que obriga a ter uma linha a mais alem da linha "fim", por algum problema de leitura EOF do Python,
+            então no caso do LEXER nesta primeira versão, isso é obrigatório para nao ter erros.
 
+        """
+
+        ref_arquivo = open("Novo Documento de Texto.txt", 'r')
+
+        # Para cada linha passar o olhar do extrator em busca de tokens
         for linha in ref_arquivo:
-            print(linha)
             self.n_linha += 1
-            self.reconheceToken(linha.lower())
+            self.extrator_tokens(linha)
 
         ref_arquivo.close()
 
-        print(self.lista_Tokens)
+        for i in self.lista_Tokens:
 
-    def reconheceToken(self, linha):
-        # metodo que irá ler o texto do arquivo, por token
+            print(i)
 
-        estado = 1
-        m_coluna = 0
-        aux_tamanhao = len(linha)
-        lexema = ""
+        for i in self.lista_erros:
+            if not i[1]:
+                print(i[0])
 
-        while not (m_coluna < aux_tamanhao):
-            # na leitura do proximo char, é incrementado a coluna
-            caractere = linha[m_coluna]
-            # print(caractere)
-            if estado == 1:
-                if caractere == ";":
-                    self.lista_Tokens.append(Token('OP_PV', ";", self.n_linha, m_coluna))
-                elif caractere == "(":
-                    self.lista_Tokens.append(Token('OP_AP', "(", self.n_linha, m_coluna))
-                elif caractere == ")":
-                    self.lista_Tokens.append(Token('OP_FP', ")", self.n_linha, m_coluna))
-                elif caractere == ",":
-                    self.lista_Tokens.append(Token('OP_VIR', ",", self.n_linha, m_coluna))
-                elif caractere == "=":
-                    self.lista_Tokens.append(Token('OP_EQ', "=", self.n_linha, m_coluna))
-                elif caractere == "<":
-                    lexema += caractere
-                    estado = 13
-                elif caractere == ">":
-                    lexema += caractere
-                    estado = 10
-                elif caractere == "+":
-                    self.lista_Tokens.append(Token('OP_SUM', "+", self.n_linha, m_coluna))
-                elif caractere == "-":
-                    self.lista_Tokens.append(Token('OP_SUB', "-", self.n_linha, m_coluna))
-                elif caractere == "*":
-                    self.lista_Tokens.append(Token('OP_MUL', "*", self.n_linha, m_coluna))
-                elif caractere == "/":
-                    lexema += caractere
-                    estado = 3
-                elif caractere.isalpha():
-                    lexema += caractere
-                    estado = 27
-                elif caractere.isdigit():
-                    lexema += caractere
-                    estado = 26
-                elif caractere == '"':
-                    lexema += caractere
-                    estado = 23
+    def extrator_tokens(self, linha):
+        # metodo que irá ler linha do arquivo, buscando por tokens
+        m_coluna = 0 # Posição inicial do cursor do lexer, primeiro caractere da linha
+        cont_tab = 0
+        for char in linha:
+        #while m_coluna < len(linha): # Enquanto existir caractere continuar lendo linha
+            #self.cursor = linha[m_coluna]
+            self.cursor = char
+            m_coluna += 1 #Controle de posição
+            if self.estado == 1:
+                # 47 ~ 52 irá adquirir informação sobre tabulação, caso tenha 3 espaços em branco um token TAB é criado
+                if self.cursor == " ":
+                    cont_tab += 1
+                    if cont_tab == 3:
+                        cont_tab = 0
+                        self.lista_Tokens.append(Token('TAB', "   ", self.n_linha, m_coluna))  # Tabulação
 
-            # Estado "<"
-            elif estado == 13:
-                if caractere == "=":
-                    self.lista_Tokens.append(Token('OP_MEEQ', "<=", self.n_linha, m_coluna))
-                    estado = 1
-                elif caractere == "-":
-                    estado = 16
-                elif caractere == ">":
-                    self.lista_Tokens.append(Token('OP_DIF', "<>", self.n_linha, m_coluna))
-                    estado = 1
                 else:
-                    self.lista_Tokens.append(Token('OP_MEN', "<", self.n_linha, m_coluna))
-                    estado = 1
-                    m_coluna -= 1
+                    cont_tab = 0
+                    if self.cursor == ";":
+                        self.lista_Tokens.append(Token('OP_PV', ";", self.n_linha, m_coluna)) # Operador Ponto Virgula
+                        self.estado = 1
+                    elif self.cursor == "(":
+                        self.lista_Tokens.append(Token('OP_AP', "(", self.n_linha, m_coluna)) # Operador Abre Parenteses
+                        self.estado = 1
+                    elif self.cursor == ")":
+                        self.lista_Tokens.append(Token('OP_FP', ")", self.n_linha, m_coluna)) # Operador Fecha Parenteses
+                        self.estado = 1
+                    elif self.cursor == ",":
+                        self.lista_Tokens.append(Token('OP_VIR', ",", self.n_linha, m_coluna)) # Operador Virgula
+                        self.estado = 1
+                    elif self.cursor == "=":
+                        self.lista_Tokens.append(Token('OP_EQ', "=", self.n_linha, m_coluna)) # Operador Igual
+                        self.estado = 1
+                    elif self.cursor == "<":
+                        self.estado = 13
+                    elif self.cursor == ">":
+                        self.estado = 10
+                    elif self.cursor == "+":
+                        self.lista_Tokens.append(Token('OP_SUM', "+", self.n_linha, m_coluna)) # Operador Soma
+                        self.estado = 1
+                    elif self.cursor == "-":
+                        self.lista_Tokens.append(Token('OP_SUB', "-", self.n_linha, m_coluna)) # Operador Subtração
+                        self.estado = 1
+                    elif self.cursor == "*":
+                        self.lista_Tokens.append(Token('OP_MUL', "*", self.n_linha, m_coluna)) # Operador Multiplicação
+                        self.estado = 1
+                    elif self.cursor == "/":
+                        self.estado = 3
+                    elif self.cursor.isalpha():
+                        self.lexema += self.cursor
+                        self.estado = 27
+                    elif self.cursor.isdigit():
+                        self.lexema += self.cursor
+                        self.estado = 26
+                    elif self.cursor == '"':
+                        self.lexema += self.cursor
+                        self.estado = 23
 
-            elif estado == 16:
-                if caractere == "-":
-                    self.lista_Tokens.append(Token('OP_ATR', "<--", self.n_linha, m_coluna))
-                    estado = 1
-
-            # Estado ">"
-            elif estado == 10:
-                if caractere == "=":
-                    self.lista_Tokens.append(Token('OP_MAEQ', ">=", self.n_linha, m_coluna))
-                    estado = 1
+            # Estados que envolvem q0 -> "<"
+            elif self.estado == 13:
+                if self.cursor == "=":
+                    self.lista_Tokens.append(Token('OP_MEEQ', "<=", self.n_linha, m_coluna)) # Operador Menor Igual
+                    self.estado = 1
+                elif self.cursor == "-":
+                    self.estado = 16
+                elif self.cursor == ">":
+                    self.lista_Tokens.append(Token('OP_DIF', "<>", self.n_linha, m_coluna)) # Operador Diferente
+                    self.estado = 1
                 else:
-                    self.lista_Tokens.append(Token('OP_MAI', ">", self.n_linha, m_coluna))
-                    estado = 1
                     m_coluna -= 1
-
-            # Estado /
-            elif estado == 3:
-                if caractere == "*":
-                    estado = 5
-                elif caractere == "/":
-                    estado = 8
+                    self.lista_Tokens.append(Token('OP_MEN', "<", self.n_linha, m_coluna)) # Operador Menor
+                    self.estado = 1
+            elif self.estado == 16:
+                if self.cursor == "-":
+                    self.lista_Tokens.append(Token('OP_ATR', "<--", self.n_linha, m_coluna)) # Operador Atribuição
+                    if self.is_panico:
+                        self.is_panico = False
+                    self.estado = 1
+                elif ((self.cursor == "\n") or (self.cursor == "\r") or (self.cursor == "\t")):
+                    self.lista_erros.append([Token('LEX_QL', "Quebra de linha inválida:" + repr(self.cursor), self.n_linha, m_coluna), self.is_panico])
+                    if not (self.is_panico):
+                        self.is_panico = True
                 else:
-                    self.lista_Tokens.append(Token('OP_DIV', "/", self.n_linha, m_coluna))
-                    estado = 1
-                    m_coluna -= 1
+                    self.lista_erros.append([Token('LEX_CI', "Caractere inválido:" + repr(self.cursor), self.n_linha, m_coluna), self.is_panico])
+                    if not (self.is_panico):
+                        self.is_panico = True
 
-            elif estado == 5:
-                if caractere == "*":
-                    estado = 6
-            elif estado == 8:
-                if caractere == "/n":
-                    estado = 1
-            elif estado == 6:
-                if caractere == "*":
+            # Estados que envolvem q0 -> ">"
+            elif self.estado == 10:
+                if self.cursor == "=":
+                    self.lista_Tokens.append(Token('OP_MAEQ', ">=", self.n_linha, m_coluna)) # Operador Maior Igual
+                    self.estado = 1
+                else:
+                    m_coluna -= 1
+                    self.lista_Tokens.append(Token('OP_MAI', ">", self.n_linha, m_coluna)) # Operador Maior
+                    self.estado = 1
+
+            # Estados que envolvem q0 -> "/"
+            elif self.estado == 3:
+                if self.cursor == "*":
+                    self.estado = 5
+                elif self.cursor == "/":
+                    self.estado = 8
+                else:
+                    m_coluna -= 1
+                    self.lista_Tokens.append(Token('OP_DIV', "/", self.n_linha, m_coluna)) # Operador Divisação
+                    self.estado = 1
+            # /*
+            elif self.estado == 5:
+                if self.cursor == "*":
+                    self.estado = 6
+            elif self.estado == 6:
+                if self.cursor == "*":
                     pass
-                elif caractere == "/":
-                    estado = 1
+                elif self.cursor == "/":
+                    self.estado = 1
                 else:
-                    estado = 5
+                    self.estado = 5
+            # //
+            elif self.estado == 8:
+                if self.cursor == "\n":
+                    self.estado = 1
 
-            # Estado de letra
-            elif estado == 27:
-                if caractere.isalnum():
-                    # enquanto encontrar
-                    lexema += caractere
-
+            # Estados que envolvem q0 -> alfabeto
+            # Enquanto encontrar caracteres, o token será formado e retornará um ID ou uma chave resevada
+            elif self.estado == 27:
+                if self.cursor.isalnum():
+                    self.lexema += self.cursor
                 else:
-                    ## -------------------------------------------------
-                    """
-                    if self.tabelaSimbolos[lexema]:
-                        aux = 'KW'
-                    else:
-                        aux = 'ID'
-                    """
-                    ## -------------------------------------------------
-                    self.lista_Tokens.append(Token('KW', lexema, self.n_linha, m_coluna))
-                    lexema = ""
+                    aux = 'KW'
+                    for num in range(len(self.tabelaSimbolos)):
+                        if self.tabelaSimbolos[num] == self.lexema.lower():
+                            aux = 'RES_KW'
                     m_coluna -= 1
-                    estado = 1
+                    self.lista_Tokens.append(Token(aux, self.lexema, self.n_linha, m_coluna)) # Key Word, se for encontrada na lista de reservadas será destacada
+                    self.lexema = ""
+                    self.estado = 1
 
-            # Estado de numero
-            elif estado == 26:
-                if caractere.isdigit():
-                    lexema += caractere
-                elif caractere == ".":
-                    estado = 30
-                    lexema += caractere
+            # Estados que envolvem q0 ->  de numero
+            # Retorna um INT ou um FLOAT
+            elif self.estado == 26:
+                if self.cursor.isdigit():
+                    self.lexema += self.cursor
+                elif self.cursor == ".":
+                    self.estado = 30
+                    self.lexema += self.cursor
                 else:
-                    self.lista_Tokens.append(Token('INT', lexema, self.n_linha, m_coluna))
-                    estado = 1
-                    lexema = ""
                     m_coluna -= 1
+                    self.lista_Tokens.append(Token('INT', self.lexema, self.n_linha, m_coluna)) # Inteiro
+                    self.estado = 1
+                    self.lexema = ""
 
-            elif estado == 30:
-                if caractere.isdigit():
-                    lexema += caractere
+            # FLOAT
+            elif self.estado == 30:
+                if self.cursor.isdigit():
+                    self.lexema += self.cursor
+                    if self.is_panico:
+                        self.is_panico = False
+                    self.estado = 31
+                elif ((self.cursor == "\n") or (self.cursor == "\r") or (self.cursor == "\t")):
+                    # estado de exceção
+                    self.lista_erros.append([Token('LEX_QL', "Quebra de linha inválida:" + repr(self.cursor), self.n_linha, m_coluna),self.is_panico])
+                    if not (self.is_panico):
+                        self.is_panico = True
                 else:
-                    self.lista_Tokens.append(Token('FLOAT', lexema, self.n_linha, m_coluna))
-                    estado = 1
-                    lexema = ""
+                    # estado de exceção
+                    self.lista_erros.append([Token('LEX_CI', "Caractere inválido:" + repr(self.cursor), self.n_linha, m_coluna),self.is_panico])
+                    if not (self.is_panico):
+                        self.is_panico = True
+            elif self.estado == 31:
+                if self.cursor.isdigit():
+                    self.lexema += self.cursor
+                else:
                     m_coluna -= 1
+                    self.lista_Tokens.append(Token('FLOAT', self.lexema, self.n_linha, m_coluna)) # Float decimal
+                    self.estado = 1
+                    self.lexema = ""
 
-            # Estado de "
-            elif estado == 23:
-                if caractere == '"':
-                    self.lista_Tokens.append(Token('STRING', lexema, self.n_linha, m_coluna))
-                    estado = 1
-                    lexema = ""
-                else:
-                    lexema += caractere
+            # Estados de contrução string q0 -> " "
+            # Contrutor de string literal, aonde ela não pode ser vazia
+            elif self.estado == 23:
+                if self.cursor.isalnum():
+                    self.lexema += self.cursor
+                    if self.is_panico:
+                        self.is_panico = False
+                    self.estado = 24
+                elif ((self.cursor == "\n") or (self.cursor == "\r") or (self.cursor == "\t")):
+                    # estado de exceção
+                    self.lista_erros.append([Token('LEX_QL', "Quebra de linha inválida:" + repr(self.cursor), self.n_linha, m_coluna), self.is_panico])
+                    if not (self.is_panico):
+                        self.is_panico = True
+
+            elif self.estado == 24:
+                if self.cursor == '"':
+                    self.lexema += self.cursor
+                    self.lista_Tokens.append(Token('STRING', self.lexema, self.n_linha, m_coluna)) # String
+                    if self.is_panico:
+                        self.is_panico = False
+                    self.estado = 1
+                    self.lexema = ""
+                elif (self.cursor.isalnum() or self.cursor == " "):
+                    self.lexema += self.cursor
+                elif ((self.cursor == "\n") or (self.cursor == "\r") or (self.cursor == "\t")):
+                    # estado de exceção
+                    self.lista_erros.append([Token('LEX_QL', "Quebra de linha inválida:" + repr(self.cursor), self.n_linha, m_coluna), self.is_panico])
+                    if not (self.is_panico):
+                        self.is_panico = True
+
             else:
                 pass
-            m_coluna += 1
+
         # Fim do While
 
     def main(self):
         self.lexermain()
 
 if __name__ == "__main__":
-    i = LEXER()
-    i.main()
+    head = LEXER()
+    head.main()

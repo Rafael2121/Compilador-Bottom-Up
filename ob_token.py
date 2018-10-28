@@ -9,5 +9,4 @@ class Token:
         self.coluna = coluna
 
     def __str__(self):
-        desc = "<" + self.tag + ",'" + self.lexema + "'> linha:" + self.linha + " coluna:" + self.coluna
-        return desc
+        return "< %s, '%s' > linha: %d coluna %d" % (self.tag, self.lexema, self.linha, self.coluna)

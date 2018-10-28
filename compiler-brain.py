@@ -1,0 +1,12 @@
+
+"""
+
+LEXER OK
+
+PARSER
+
+SINTATIC
+
+SEMANTIC
+
+"""
