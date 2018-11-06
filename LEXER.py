@@ -5,9 +5,6 @@ from ob_token import Token
 from tag import tag
 
 
-# INTERFACE PRINCIPAL
-
-
 class LEXER:
 
     def __init__(self):
@@ -63,7 +60,7 @@ class LEXER:
             m_coluna += 1 #Controle de posição
             if self.estado == 1:
                 # 47 ~ 52 irá adquirir informação sobre tabulação, caso tenha 3 espaços em branco um token TAB é criado
-                if self.cursor == " ":
+                if self. cursor == " ":
                     cont_tab += 1
                     if cont_tab == 3:
                         cont_tab = 0
@@ -265,10 +262,3 @@ class LEXER:
                 pass
 
         # Fim do While
-
-    def main(self):
-        self.lexermain()
-
-if __name__ == "__main__":
-    head = LEXER()
-    head.main()
