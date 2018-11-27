@@ -1,15 +1,36 @@
 # CLASSE DE TAGS HASH
 
-class tag:
+class TAGs:
 
     def __init__(self):
 
-        self.tags = ['programa', 'algoritmo', 'fim', 'subrotina', 'declare', 'logico', 'numerico', 'literal', 'se', 'enquanto', 'senao', 'leia',
-                     'repita', 'ate', 'verdadeira', 'falso', 'ou', 'e', 'nao']
+        self.simbolos = ['programa', 'algoritmo', 'fim', 'subrotina', 'declare', 'logico', 'numerico', 'literal', 'se', 'enquanto',
+                     'senao', 'leia', 'repita', 'ate', 'verdadeira', 'falso', 'ou', 'e', 'nao']
 
-
-        """
-        self.tags = {'+': 'OP_SUM',
+        self.tags = {
+                     ##----------------------##
+                     'programa': 'KW_RES_program',
+                     'algoritmo': 'KW_RES_algorithm',
+                     'fim': 'KW_RES_end',
+                     'subrotina': 'KW_RES_met',
+                     'declare': 'KW_RES_var',
+                     'logico': 'KW_RES_logic',
+                     'numerico': 'KW_RES_number',
+                     'literal': 'KW_RES_string',
+                     'se': 'KW_RES_id',
+                     'enquanto': 'KW_RES_for',
+                     'senao': 'KW_RES_else',
+                     'leia': 'KW_RES_read',
+                     'repita': 'KW_RES_do',
+                     'ate': 'KW_RES_dwhile',
+                     'verdadeira': 'KW_RES_true',
+                     'falso': 'KW_RES_false',
+                     'ou': 'KW_RES_or',
+                     'e': 'KW_RES_and',
+                     'nao': 'KW_RES_Neg'}
+                     #--------
+"""
+                     '+': 'OP_SUM',
                      '-': 'OP_SUB',
                      '*': 'OP_MULT',
                      '/': 'OP_DIV',
@@ -23,25 +44,5 @@ class tag:
                      '(': 'OP_AP',
                      ')': 'OP_FP',
                      ',': 'OP_VIR',
-                     ';': 'OP_PV',
-                     ##----------------------##
-                     'programa': 'KW_RES',
-                     'algoritmo': 'KW_RES',
-                     'fim': 'KW_RES',
-                     'subrotina': 'KW_RES',
-                     'declare': 'KW_RES',
-                     'logico': 'KW_RES',
-                     'numerico': 'KW_RES',
-                     'literal': 'KW_RES',
-                     'se': 'KW_RES',
-                     'enquanto': 'KW_RES',
-                     'senao': 'KW_RES',
-                     'leia': 'KW_RES',
-                     'repita': 'KW_RES',
-                     'ate': 'KW_RES',
-                     'verdadeira': 'KW_RES',
-                     'falso': 'KW_RES',
-                     'ou': 'KW_RES',
-                     'e': 'KW_RES',
-                     'nao': 'KW_RES'}
-        """
+                     ';': 'OP_PV'
+"""

@@ -10,8 +10,8 @@ SINTATIC
 SEMANTIC
 
 """
-import LEXER
-
+from LEXER import Lexer
+from PARSER import Parser
 
 class compilerBrain:
 
@@ -21,18 +21,16 @@ class compilerBrain:
     def compilermain(self):
         """
             Este será o módulo principal do programa, considerado o cerebro do Compilador Portugolo
-
-
-
         """
+        lexer = Lexer()
+        lexer.lexermain()
 
-        LEXER.lexermain()
-        listaTokens = LEXER.get_lista_tokens
-
-
+        #parser = Parser()
+        #parser.parsermain(lexer.get_lista_tokens())
 
 
     def main(self):
+
         self.compilermain()
 
 

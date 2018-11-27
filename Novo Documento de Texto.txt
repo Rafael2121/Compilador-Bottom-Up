@@ -1,0 +1,11 @@
+algoritmo
+   declare msgm, num;
+   num <-- 15 ;// teste de int
+   num <-- 15.65; // teste de float
+   num <-- 45.44;
+   num <-- 453.4;
+   repita (x ate 50)
+      teste <-- 10
+   msgm = "teste de msgm"
+   msgm <-- "teste de erro de msgm"
+fim algoritmo
