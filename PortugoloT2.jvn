@@ -1,0 +1,13 @@
+algoritmo
+// restando 
+declare msgm
+
+;
+num <-- 15.
+4;
+msgm <-- "Hello World";
+
+
+escreva(msgm);
+
+fim
