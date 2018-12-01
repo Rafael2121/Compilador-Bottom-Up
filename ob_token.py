@@ -10,3 +10,6 @@ class Token:
 
     def __str__(self):
         return "< %s, '%s' > linha: %d coluna %d" % (self.tag, self.lexema, self.linha, self.coluna)
+
+    def getTag(self):
+        return self.tag

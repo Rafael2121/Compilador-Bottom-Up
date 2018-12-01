@@ -65,7 +65,7 @@ class Lexer:
                     cont_tab += 1
                     if cont_tab == 3:
                         cont_tab = 0
-                        self.lista_Tokens.append(Token('TAB', "   ", self.n_linha, self.m_coluna))  # Tabulação
+                        # self.lista_Tokens.append(Token('TAB', "   ", self.n_linha, self.m_coluna))  # Tabulação
 
                 else:
                     cont_tab = 0

@@ -25,8 +25,8 @@ class compilerBrain:
         lexer = Lexer()
         lexer.lexermain()
 
-        #parser = Parser()
-        #parser.parsermain(lexer.get_lista_tokens())
+        parser = Parser()
+        parser.parsermain(lexer.get_lista_tokens())
 
 
     def main(self):
