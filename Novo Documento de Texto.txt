@@ -1,11 +1,20 @@
-algoritmo
-   declare msgm, num;
-   num <-- 15 ;// teste de int
-   num <-- 15.65; // teste de float
-   num <-- 45.44;
-   num <-- 453.4;
-   repita (x ate 50)
-      teste <-- 10
-   msgm = "teste de msgm"
-   msgm <-- "teste de erro de msgm"
+Algoritmo
+	declare literal op, a;
+	numerico s, d;
+	escreva("s + a");
+	leia(op);
+	se(op = falso) inicio
+		escreva("Oi, eu sou o Goku!");
+	fim
+	senao inicio 
+		escreva("Seu inseto, achei que iria preferir o Kakaroto");
+	fim
 fim algoritmo
+
+subrotina fazNada(v1 nulo)
+	escreva("Se a rotina faz nada, por que tem um comando de impressao?");
+fim subrotina
+
+subrotina fazNada(v1 nulo)
+	escreva("Se a rotina faz nada, por que tem um comando de impressao?");
+fim subrotina

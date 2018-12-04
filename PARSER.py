@@ -1,8 +1,7 @@
 # Programa destinado a análise dos objetos recuperados pelo LEXER
 
 from Stack import stack
-from ob_token import Token
-
+from tag import TAGs
 class Parser:
 
     def __init__(self):
@@ -10,49 +9,90 @@ class Parser:
         self.cursor = 0 # Variavel de controle de entrada da lista de tokens
         self.estado = 0
         self.pilha = stack()
+        self.is_goto = False
 
-
+        self.skipperORreduced = False
+        self.errors = 0
+        self.countCharVazio = 0
     def parsermain(self, lista_Tokens):
         """
         Módulo que compara os tokens reconhecidos pelo PARSER com a gramatica portugolo
-        No final desta classe está em comentário TODA a gramática, que será retirada nas versões que aceitarão qualquer uma
-        O objetivo final é um parser bottom up com um módulo que entenda um padrão de escrita de gramática, que se estiver minimamente
-        boa, poderá ser reconhecida e aplicada
+        O objetivo final é um parser bottom up
+
         """
         # TABELA -------> PILHA | ENTRADA | AÇÃO
         self.lista_Tokens = lista_Tokens # entrada
-        # self.pilha.pack('$')
-        self.SKIP(1,'$')
+        self.SKIP(1, '$')
         self.parser_analisys()
 
     def SKIP(self, estado, lexema):
-        print('Found a ' + str(lexema) + ' SKIP to state ' + str(estado))
-        if (estado != 1):
+        self.skipperORreduced = True
+        if self.is_goto:
+            print('Output: Reduced a ' + str(lexema) + ' GOTO to state ' + str(estado))
+        else:
+            print('Output: Found a ' + str(lexema) + ' SKIP to state ' + str(estado))
+
+        if self.is_goto == False and estado != 1 and lexema != 'Ɛ':
             self.cursor = self.cursor + 1
+
+        if lexema == 'Ɛ' or lexema == 'Negacao':
+            self.countCharVazio = self.countCharVazio + 1
+        else:
+            self.countCharVazio = 0
+
+        self.is_goto = False
         self.estado = estado
-        self.pilha.pack(estado)
         self.pilha.pack(lexema)
-        self.entrada = self.lista_Tokens[self.cursor].getTag()
+        self.pilha.pack(estado)
+        self.pilha.print()
 
     def REDUCE(self, qtd_lexemas, lex_reduce):
+        self.skipperORreduced = True
         for i in range(qtd_lexemas * 2):
             self.pilha.unpack()
         self.estado = self.pilha.entry()
         self.entrada = lex_reduce
+        self.is_goto = True
+        self.pilha.print()
+
+    def parser_analisys(self):
+        while(self.estado != 0 and self.errors <= 1):
+            if self.is_goto == False:
+                self.entrada = self.lista_Tokens[self.cursor].getTag()
+            self.switch_case()
+            self.look_its_A_error()
+            self.skipperORreduced = False
+
+    def look_its_A_error(self):
+        if self.skipperORreduced == False:
+            print('Error entrada não reconhecida: est: '+ str(self.estado) +''+ str(self.lista_Tokens[self.cursor]))
+            self.errors = self.errors + 1
+            self.cursor = self.cursor + 1
+        elif self.countCharVazio >= 4:
+            print('Error entrada ocasionou loop: est: ' + str(self.estado) +''+ str(self.lista_Tokens[self.cursor]))
+            self.errors = self.errors + 1
+            self.cursor = self.cursor + 1
+            for i in range(4):
+                self.pilha.unpack()
+
+    def SYNC(self, Gram):
+        temp = TAGs.FRISTS[Gram]
+        for item in temp:
+            if self.entrada == item:
+
+                return
+        else:
+
+            pass
+
 
     def switch_case(self):
         estado = self.estado
         if (estado == 187 or estado == 140 or estado == 134 or estado == 129):
             estado = 124
         method_name = 'estado_' + str(estado)
-        method = getattr(self, method_name, lambda : 'Estado inválido')
+        method = getattr(self, method_name, lambda: 'Estado inválido')
         method()
-
-    def parser_analisys(self):
-
-        while(self.estado != 0):
-            self.switch_case()
-            self.pilha.print()
 
     def estado_0(self):
         print('Acabou')
@@ -70,28 +110,34 @@ class Parser:
             self.SKIP(0, 'Compilador')
     def estado_2(self):
         """
-        + Compilador: Programa • EOF
+        + Compilador: Programa• : EOF
         """
         self.REDUCE(1, 'Compilador')
     def estado_3(self):
         """
         + Programa: "algoritmo" •DeclaraVar ListaCmd "fim" "algoritmo" ListaRotina : EOF
-        + DeclaraVar: •"declare" ListaID Tipo ";" ListaDeclaraVar: ListaCmd
+        + DeclaraVar: •"declare" Tipo ListaID ";" ListaDeclaraVar: ListaCmd
         """
-        print('sdsadsadsadsdasdsada')
         if (self.entrada == 'KW_RES_var'):
-            self.SKIP(4, 'KW_RES_var')
+            self.SKIP(11, 'KW_RES_var')
         elif (self.entrada == 'DeclaraVar'):
             self.SKIP(25, 'DeclaraVar')
+        else:
+            self.SKIP(311, 'Ɛ')
+    def estado_311(self):
+        """
+        + DeclaraVar: Ɛ• : ListaCmd
+        """
+        self.REDUCE(1, 'DeclaraVar')
     def estado_4(self):
         """
-        + DeclaraVar: "declare" •ListaID Tipo ";" ListaDeclaraVar: ListaCmd
+        + DeclaraVar: "declare" Tipo •ListaID ";" ListaDeclaraVar: ListaCmd
         + ListaID: •ID ListaAdd : Tipo
         """
         if (self.entrada == 'KW_RES_ID'):
             self.SKIP(5, 'KW_RES_ID')
         elif (self.entrada == 'ListaID'):
-            self.SKIP(11, 'ListaID')
+            self.SKIP(16, 'ListaID')
     def estado_5(self):
         """
         + ListaID: ID •ListaAdd : Tipo
@@ -103,16 +149,16 @@ class Parser:
         elif (self.entrada == 'ListaAdd'):
             self.SKIP(6, 'ListaAdd')
         else:
-            self.SKIP(8,'Ɛ')
+            self.SKIP(8, 'Ɛ')
     def estado_6(self):
         """
-        + ListaID: ID ListaAdd• : Tipo
+        + ListaID: ID ListaAdd• : ";"
         """
         self.REDUCE(2, 'ListaID')
     def estado_7(self):
         """
-        + ListaAdd: ", " •ListaID : Tipo
-        + ListaID: •ID ListaAdd : Tipo
+        + ListaAdd: ", " •ListaID : ";"
+        + ListaID: •ID ListaAdd : ";"
         """
         if (self.entrada == 'KW_RES_ID'):
             self.SKIP(5, 'KW_RES_ID')
@@ -120,26 +166,24 @@ class Parser:
             self.SKIP(10,'ListaID')
     def estado_8(self):
         """
-        + ListaAdd: Ɛ•: Tipo
+        + ListaAdd: Ɛ•: ";"
         """
         self.REDUCE(1, 'ListaAdd')
-    def estado_9(self):
-        pass
     def estado_10(self):
         """
-        + ListaAdd: "," ListaID •: Tipo
+        + ListaAdd: "," ListaID •: ";"
         """
         self.REDUCE(2, 'ListaAdd')
     def estado_11(self):
         """
-        + DeclaraVar: "declare" ListaID •Tipo ";" ListaDeclaraVar: ListaCmd
-        + Tipo: •"logico" : ";"
-        + Tipo: •"numerico" : ";"
-        + Tipo: •"literal" : ";"
-        + Tipo: •"nulo" : ";"
+        + DeclaraVar: "declare" •Tipo ListaID";" ListaDeclaraVar: ListaCmd
+        + Tipo: •"logico" : ListaID
+        + Tipo: •"numerico" : ListaID
+        + Tipo: •"literal" : ListaID
+        + Tipo: •"nulo" : ListaID
         """
         if (self.entrada == 'Tipo'):
-            self.SKIP(16, 'Tipo')
+            self.SKIP(4, 'Tipo')
         elif (self.entrada == 'KW_RES_logic'):
             self.SKIP(12, 'KW_RES_logic')
         elif (self.entrada == 'KW_RES_number'):
@@ -150,92 +194,106 @@ class Parser:
             self.SKIP(15, 'KW_RES_null')
     def estado_12(self):
         """
-        + Tipo: "logico"• : ";"
+        + Tipo: "logico"• : ListaID
         """
         self.REDUCE(1, 'Tipo')
     def estado_13(self):
         """
-        + Tipo: "numerico"• : ";"
+        + Tipo: "numerico"• : ListaID
         """
         self.REDUCE(1, 'Tipo')
     def estado_14(self):
         """
-        + Tipo: "literal"• : ";"
+        + Tipo: "literal"• : ListaID
         """
         self.REDUCE(1, 'Tipo')
     def estado_15(self):
         """
-        + Tipo: "nulo"• : ";"
+        + Tipo: "nulo"• : ListaID
         """
         self.REDUCE(1, 'Tipo')
     def estado_16(self):
         """
-        + DeclaraVar: "declare" ListaID Tipo •";" ListaDeclaraVar: ListaCmd
+        + DeclaraVar: "declare" Tipo ListaID •";" ListaDeclaraVar: ListaCmd
         """
         if(self.entrada == 'OP_PV'):
-            self.SKIP(17,'OP_PV')
+            self.SKIP(17, 'OP_PV')
     def estado_17(self):
         """
-        + DeclaraVar: "declare" ListaID Tipo ";" •ListaDeclaraVar: ListaCmd
-        + ListaDeclaraVar: •ListaID Tipo "," ListaDeclaraVar : ListaCmd
+        + DeclaraVar: "declare" Tipo ListaID ";" •ListaDeclaraVar: ListaCmd
+        + ListaDeclaraVar: •Tipo ListaID "," ListaDeclaraVar : ListaCmd
         + ListaDeclaraVar: •Ɛ : ListaCmd
-        + ListaID: ID ListaAdd: Tipo
+        + Tipo: •"logico" : ListaID
+        + Tipo: •"numerico" : ListaID
+        + Tipo: •"literal" : ListaID
+        + Tipo: •"nulo" : ListaID
         """
         if (self.entrada == 'ListaDeclaraVar'):
             self.SKIP(18, 'ListaDeclaraVar')
-        elif (self.entrada == 'ListaID'):
-            self.SKIP(19, 'ListaID')
-        elif (self.entrada == 'ID'):
-            self.SKIP(5, 'ID')
-        else:
-            self.SKIP(23, 'Ɛ')
-    def estado_19(self):
-        """
-         + ListaDeclaraVar: ListaID •Tipo ";" ListaDeclaraVar: ListaCmd
-         + Tipo: •"logico" : ";"
-         + Tipo: •"numerico" : ";"
-         + Tipo: •"literal" : ";"
-         + Tipo: •"nulo" : ";"
-        """
-        if (self.entrada == 'Tipo'):
-            self.SKIP(20, 'Tipo')
+        elif (self.entrada == 'Tipo'):
+            self.SKIP(19, 'Tipo')
         elif (self.entrada == 'KW_RES_logic'):
             self.SKIP(12, 'KW_RES_logic')
         elif (self.entrada == 'KW_RES_number'):
             self.SKIP(13, 'KW_RES_number')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(14, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(14, 'STRING')
         elif (self.entrada == 'KW_RES_null'):
             self.SKIP(15, 'KW_RES_null')
+        else:
+            self.SKIP(23, 'Ɛ')
+    def estado_18(self):
+        """
+        + DeclaraVar: "declare" Tipo ListaID";" ListaDeclaraVar•: ListaCmd
+        """
+        self.REDUCE(5, 'DeclaraVar')
+    def estado_19(self):
+        """
+         + ListaDeclaraVar: Tipo •ListaID ";" ListaDeclaraVar: ListaCmd
+         + ListaID: •ID ListaAdd: ";"
+        """
+        if (self.entrada == 'ListaID'):
+            self.SKIP(20, 'ListaID')
+        elif (self.entrada == 'KW_RES_ID'):
+            self.SKIP(5, 'KW_RES_ID')
     def estado_20(self):
         """
-        + ListaDeclaraVar: ListaID Tipo •";" ListaDeclaraVar: ListaCmd
+        + ListaDeclaraVar: Tipo ListaID •";" ListaDeclaraVar: ListaCmd
         """
         if (self.entrada == 'OP_PV'):
-            self.SKIP(21,'OP_PV')
+            self.SKIP(21, 'OP_PV')
     def estado_21(self):
         """
-        + ListaDeclaraVar: ListaID Tipo ";" •ListaDeclaraVar: ListaCmd
-        + ListaDeclaraVar: •ListaID Tipo "," ListaDeclaraVar : ListaCmd
+        + ListaDeclaraVar: Tipo ListaID  ";" •ListaDeclaraVar: ListaCmd
+        + ListaDeclaraVar: •Tipo ListaID "," ListaDeclaraVar : ListaCmd
         + ListaDeclaraVar: •Ɛ : ListaCmd
-        + ListaID: ID ListaAdd: Tipo
+        + Tipo: •"logico" : ListaID
+        + Tipo: •"numerico" : ListaID
+        + Tipo: •"literal" : ListaID
+        + Tipo: •"nulo" : ListaID
         """
         if (self.entrada == 'ListaDeclaraVar'):
             self.SKIP(22, 'ListaDeclaraVar')
-        elif (self.entrada == 'ListaID'):
-            self.SKIP(19, 'ListaID')
-        elif (self.entrada == 'ID'):
-            self.SKIP(5, 'ID')
+        elif (self.entrada == 'Tipo'):
+            self.SKIP(19, 'Tipo')
+        elif (self.entrada == 'KW_RES_logic'):
+            self.SKIP(12, 'KW_RES_logic')
+        elif (self.entrada == 'KW_RES_number'):
+            self.SKIP(13, 'KW_RES_number')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(14, 'STRING')
+        elif (self.entrada == 'KW_RES_null'):
+            self.SKIP(15, 'KW_RES_null')
         else:
             self.SKIP(23, 'Ɛ')
     def estado_22(self):
         """
-        + ListaDeclaraVar: ListaID Tipo ";" •ListaDeclaraVar: ListaCmd
+        + ListaDeclaraVar: Tipo ListaID ";" ListaDeclaraVar•: ListaCmd
         """
         self.REDUCE(4, 'ListaDeclaraVar')
     def estado_23(self):
         """
-        + ListaDeclaraVar: •Ɛ: ListaCmd
+        + ListaDeclaraVar: Ɛ•: ListaCmd
         """
         self.REDUCE(1, 'ListaDeclaraVar')
     def estado_24(self):
@@ -440,8 +498,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -465,7 +523,7 @@ class Parser:
         + CmdSe: "se" "(" Expressao ")" •"inicio" ListaCmd "fim" CmdSN : ListaCmd
         """
         if (self.entrada == 'KW_RES_begin'):
-            self.SKIP(39, 'KW_RES_begin')
+            self.SKIP(40, 'KW_RES_begin')
     def estado_40(self):
         """
         + CmdSe: "se" "(" Expressao ")" "inicio" •ListaCmd "fim" CmdSN : ListaCmd
@@ -661,8 +719,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -775,8 +833,8 @@ class Parser:
         """
         + CmdAtrib: ID •"<--" Expressao ";": "ate"
         """
-        if (self.entrada == 'OP_AT'):
-            self.SKIP(58, 'OP_AT')
+        if (self.entrada == 'OP_ATR'):
+            self.SKIP(58, 'OP_ATR')
     def estado_58(self):
         """
         + CmdAtrib: ID "<--" •Expressao ";": "ate"
@@ -805,8 +863,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -865,8 +923,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -1024,6 +1082,7 @@ class Parser:
         """
         if (self.entrada == 'KW_RES_dwhile'):
             self.SKIP(70, 'KW_RES_dwhile')
+        print('huehuasd - ' + str(self.skipperORreduced))
     def estado_70(self):
         """
         + CmdRepita: "repita" ListaCmd "ate" •Expressao : ListaCmd
@@ -1052,8 +1111,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -1146,11 +1205,11 @@ class Parser:
         + Parametros: •"(" ListaParametros ")" : ";"
         + Parametros: •Ɛ : ";"
         """
-        if (self.entrada == 'OP_AT'):
-            self.SKIP(76, 'OP_AT')
-        if (self.entrada == 'OP_AP'):
+        if (self.entrada == 'OP_ATR'):
+            self.SKIP(76, 'OP_ATR')
+        elif (self.entrada == 'OP_AP'):
             self.SKIP(121, 'OP_AP')
-        if (self.entrada == 'Parametos'):
+        elif (self.entrada == 'Parametros'):
             self.SKIP(119, 'Parametros')
         else:
             self.SKIP(118, 'Ɛ')
@@ -1182,8 +1241,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -1241,8 +1300,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -1295,18 +1354,18 @@ class Parser:
         + CmdLeia: "leia" "(" ID ")" •";": ListaCmd
         """
         if (self.entrada == 'OP_PV'):
-            self.SKIP(80, 'OP_PV')
+            self.SKIP(88, 'OP_PV')
     def estado_88(self):
         """
-        + CmdEscreva: "escreva" "(" Expressao ")" ";"•: ListaCmd
+        + CmdLeia: "leia" "(" ID ")" ";"•: ListaCmd
         """
-        self.REDUCE(5, 'CmdEscreva')
+        self.REDUCE(5, 'CmdLeia')
     def estado_89(self):
         """
         + Programa: "algoritmo" DeclaraVar ListaCmd •"fim" "algoritmo" ListaRotina : EOF
         """
         if (self.entrada == 'KW_RES_end'):
-            self.SKIP(89, 'KW_RES_end')
+            self.SKIP(90, 'KW_RES_end')
     def estado_90(self):
         """
         + Programa: "algoritmo" DeclaraVar ListaCmd "fim" •"algoritmo" ListaRotina : EOF
@@ -1321,7 +1380,7 @@ class Parser:
         + Rotina: •"subrotina" ID "(" Param ")" DeclaraVar ListaCmd Retorno "fim" "subrotina" : ListaRotina
         """
         if (self.entrada == 'ListaRotina'):
-            self.SKIP(118, 'ListaRotina')
+            self.SKIP(192, 'ListaRotina')
         elif (self.entrada == 'KW_RES_met'):
             self.SKIP(94, 'KW_RES_met')
         elif (self.entrada == 'Rotina'):
@@ -1336,7 +1395,7 @@ class Parser:
         + Rotina: •"subrotina" ID "(" Param ")" DeclaraVar ListaCmd Retorno "fim" "subrotina" : ListaRotina
         """
         if (self.entrada == 'ListaRotina'):
-            self.SKIP(118, 'ListaRotina')
+            self.SKIP(931, 'ListaRotina')
         elif (self.entrada == 'KW_RES_met'):
             self.SKIP(94, 'KW_RES_met')
         elif (self.entrada == 'Rotina'):
@@ -1348,6 +1407,12 @@ class Parser:
         + ListaRotina: Ɛ• : EOF
         """
         self.REDUCE(1, 'ListaRotina')
+    def estado_931(self):
+        """
+        + ListaRotina: Rotina ListaRotina•: EOF
+        """
+        self.REDUCE(2, 'ListaRotina')
+
     def estado_94(self):
         """
         + Rotina: "subrotina" •ID "(" Param ")" DeclaraVar ListaCmd Retorno "fim" "subrotina" : ListaRotina
@@ -1386,8 +1451,8 @@ class Parser:
             self.SKIP(100, 'KW_RES_logic')
         elif (self.entrada == 'KW_RES_number'):
             self.SKIP(101, 'KW_RES_number')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(102, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(102, 'STRING')
         elif (self.entrada == 'KW_RES_null'):
             self.SKIP(103, 'KW_RES_null')
     def estado_98(self):
@@ -1448,7 +1513,7 @@ class Parser:
         """
         + Param : ListaID Tipo ListaParam• : ")"
         """
-        self.REDUCE(1, 'Param')
+        self.REDUCE(3, 'Param')
     def estado_106(self):
         """
         + Rotina: "subrotina" ID "(" Param •")" DeclaraVar ListaCmd Retorno "fim" "subrotina" : ListaRotina
@@ -1458,12 +1523,15 @@ class Parser:
     def estado_107(self):
         """
         + Rotina: "subrotina" ID "(" Param ")" •DeclaraVar ListaCmd Retorno "fim" "subrotina" : ListaRotina
-        + DeclaraVar: •"declare" ListaID Tipo ";" ListaDeclaraVar: ListaCmd
+        + DeclaraVar: •"declare" Tipo ListaID ";" ListaDeclaraVar: ListaCmd
+        + DeclaraVar: •Ɛ ListaCmd
         """
         if (self.entrada == 'DeclaraVar'):
             self.SKIP(108, 'DeclaraVar')
         elif (self.entrada == 'KW_RES_var'):
-            self.SKIP(4, 'KW_RES_var')
+            self.SKIP(11, 'KW_RES_var')
+        else:
+            self.SKIP(311, 'Ɛ')
     def estado_108(self):
         """
         + Rotina: "subrotina" ID "(" Param ")" DeclaraVar •ListaCmd Retorno "fim" "subrotina" : ListaRotina
@@ -1602,6 +1670,11 @@ class Parser:
             self.SKIP(116, 'OP_PV')
         else:
             self.SKIP(1121, 'Ɛ')
+    def estado_1121(self):
+        """
+         Retorno: Ɛ• : "fim"
+        """
+        self.REDUCE(1, 'Retorno')
     def estado_113(self):
         """
         + Rotina: "subrotina" ID "(" Param ")" DeclaraVar ListaCmd Retorno •"fim" "subrotina" : ListaRotina
@@ -1647,8 +1720,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -1714,8 +1787,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -1728,7 +1801,12 @@ class Parser:
             self.SKIP(171, 'KW_RES_ID')
         else:
             self.SKIP(166, 'Ɛ')
-
+    def estado_122(self):
+        """
+        + Parametros: "(" ListaParametros •")": ListaCmd
+        """
+        if (self.entrada == 'OP_FP'):
+            self.SKIP(123, 'OP_FP')
     def estado_1221(self):
         """
         + ListaParametros: Expressao •AddParametros : ")"
@@ -1738,13 +1816,13 @@ class Parser:
         if (self.entrada == 'AddParametros'):
             self.SKIP(1222, 'AddParametros')
         elif (self.entrada == 'OP_VIR'):
-            self.SKIP(1223, 'OP_VIR')
+            self.SKIP(1224, 'OP_VIR')
         else:
-            self.SKIP(1, 'AddParametros')
+            self.SKIP(1223, 'Ɛ')
 
     def estado_1222(self):
         """
-        + ListaParametros: Expressao AddParametros•
+        + ListaParametros: Expressao AddParametros• : ")"
         """
         self.REDUCE(2, 'ListaParametros')
 
@@ -1753,8 +1831,6 @@ class Parser:
         + AddParametros: Ɛ•: ")"
         """
         self.REDUCE(1, 'AddParametros')
-
-    #################################################################
     def estado_1224(self):
         """
         + AddParametros: "," •ListaParametros: ")"
@@ -1786,8 +1862,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -1801,7 +1877,6 @@ class Parser:
         else:
             self.SKIP(166, 'Ɛ')
 
-
     def estado_1225(self):
         """
         + AddParametros: "," ListaParametros•: ")"
@@ -1813,8 +1888,6 @@ class Parser:
         + Parametros: "(" ListaParametros ")"•: ListaCmd
         """
         self.REDUCE(3, 'Parametros')
-#######################################3333333333333333333333333333333
-
     def estado_124(self):
         """
         + Expressao: Expressao1 •ListaExpressao : ";"
@@ -1884,8 +1957,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -1949,8 +2022,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -1966,9 +2039,9 @@ class Parser:
 
     def estado_147(self):
         """
-        + ListaExpressao1: OperadorLogico Expressao1• : ListaExpresssao
+        + Expressao1: Expressao2 ListaExpressao1• : ListaExpressao
         """
-        self.REDUCE(2, 'ListaExpressao1')
+        self.REDUCE(2, 'Expressao1')
 
     def estado_148(self):
         """
@@ -2023,6 +2096,12 @@ class Parser:
             self.SKIP(157, 'OP_DIV')
         else:
             self.SKIP(158, 'Ɛ')
+    def estado_153(self):
+        """
+        + Expressao2: Valor ListaExpressao2• : ListaExpressao1
+        """
+        self.REDUCE(2, 'Expressao2')
+
     def estado_154(self):
         """
         + ListaExpressao2: OperadorMatematico •Expressao2 : ListaExpresssao1
@@ -2045,8 +2124,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -2094,11 +2173,55 @@ class Parser:
         + OperadorMatematico: "+"• : Expressao2
         """
         self.REDUCE(1, 'OperadorMatematico')
+
     def estado_162(self):
         """
         + Valor: Negacao •Expressao : ListaExpressao2
+        + Expressao: •Expressao1 ListaExpressao : ListaExpressao2
+        + Expressao1: •Expressao2 ListaExpressao1 : ListaExpressao
+        + Expressao2: •Valor ListaExpressao2 : ListaExpressao1
+        + Valor: •"verdadeiro" : ListaExpressao2
+        + Valor: •"falso" : ListaExpressao2
+        + Valor: •literal : ListaExpressao2
+        + Valor: •"(" Expressao ")" : ListaExpressao2
+        + Valor: •numerico : ListaExpressao2
+        + Valor: •ID Parametros : ListaExpressao2
+        + Valor: •Negacao Expressao : ListaExpressao2
+        + Negacao: •"nao" : ListaExpressao2
+        + Negacao: •Ɛ : ListaExpressao2
         """
-        self.REDUCE(1, 'Valor')
+        if(self.entrada == 'Expressao'):
+            self.SKIP(1621,'Expressao')
+        elif(self.entrada == 'Expressao1'):
+            self.SKIP(124,'Expressao1')
+        elif (self.entrada == 'Expressao2'):
+            self.SKIP(145, 'Expressao2')
+        elif (self.entrada == 'Valor'):
+            self.SKIP(152, 'Valor')
+        elif (self.entrada == 'KW_RES_true'):
+            self.SKIP(163, 'KW_RES_true')
+        elif (self.entrada == 'KW_RES_false'):
+            self.SKIP(164, 'KW_RES_false')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
+        elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
+            self.SKIP(167, 'KW_RES_number')
+        elif (self.entrada == 'Negacao'):
+            self.SKIP(162, 'Negacao')
+        elif (self.entrada == 'KW_RES_neg'):
+            self.SKIP(1661, 'KW_RES_neg')
+        elif (self.entrada == 'OP_AP'):
+            self.SKIP(168, 'OP_AP')
+        elif (self.entrada == 'KW_RES_ID'):
+            self.SKIP(171, 'KW_RES_ID')
+        else:
+            self.SKIP(166, 'Ɛ')
+
+    def estado_1621(self):
+        """
+        + Valor: Negacao Expressao• : ListaExpressao2
+        """
+        self.REDUCE(2, 'Valor')
     def estado_163(self):
         """
         + Valor: "verdadeiro"• : ListaExpressao2
@@ -2157,8 +2280,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -2193,14 +2316,14 @@ class Parser:
         if (self.entrada == 'Parametros'):
             self.SKIP(1711, 'Parametros')
         elif (self.entrada == 'OP_AP'):
-            self.SKIP(171, 'OP_AP')
+            self.SKIP(173, 'OP_AP')
         else:
             self.SKIP(172, 'Ɛ')
     def estado_1711(self):
         """
         + Valor: ID Parametros• : ListaExpressao2
         """
-        self.REDUCE(1, 'Valor')
+        self.REDUCE(2, 'Valor')
     def estado_172(self):
         """
         + Parametros: Ɛ• : ListaExpressao2
@@ -2237,8 +2360,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -2271,19 +2394,19 @@ class Parser:
         + AddParametros: •Ɛ : ListaExpressao2
         """
         if (self.entrada == 'AddParametros'):
-            self.SKIP(1761, 'AddParametros')
+            self.SKIP(177, 'AddParametros')
         elif (self.entrada == 'OP_VIR'):
             self.SKIP(179, 'OP_VIR')
         else:
             self.SKIP(178, 'Ɛ')
     def estado_177(self):
         """
-        + ListaParametros: Expressao •AddParametros : ListaExpressao2
+        + ListaParametros: Expressao AddParametros• : ListaExpressao2
         """
         self.REDUCE(2, 'ListaParametros')
     def estado_178(self):
         """
-        + AddParametros: •Ɛ : ListaExpressao2
+        + AddParametros: Ɛ• : ListaExpressao2
         """
         self.REDUCE(1, 'AddParametros')
     def estado_179(self):
@@ -2317,8 +2440,8 @@ class Parser:
             self.SKIP(163, 'KW_RES_true')
         elif (self.entrada == 'KW_RES_false'):
             self.SKIP(164, 'KW_RES_false')
-        elif (self.entrada == 'KW_RES_string'):
-            self.SKIP(165, 'KW_RES_string')
+        elif (self.entrada == 'STRING'):
+            self.SKIP(165, 'STRING')
         elif (self.entrada == 'INT' or self.entrada == 'FLOAT'):
             self.SKIP(167, 'KW_RES_number')
         elif (self.entrada == 'Negacao'):
@@ -2367,7 +2490,11 @@ class Parser:
         + OperadorRelacional: "="• : Expressao
         """
         self.REDUCE(1, 'OperadorRelacional')
-
+    def estado_192(self):
+        """
+        + Programa: "algoritmo" DeclaraVar ListaCmd "fim" "algoritmo" ListaRotina• : EOF
+        """
+        self.REDUCE(6, 'Programa')
     """
     Compilador → Programa EOF
     Programa → algoritmo DeclaraVar ListaCmd fim algoritmo ListaRotina
