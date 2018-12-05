@@ -86,7 +86,7 @@ class Lexer:
                 self.lista_Tokens.append(Token('OP_SUB', "-", self.n_linha, self.m_coluna))  # Operador Subtração
                 self.estado = 1
             elif cursor == "*":
-                self.lista_Tokens.append(Token('OP_MUL', "*", self.n_linha, self.m_coluna))  # Operador Multiplicação
+                self.lista_Tokens.append(Token('OP_MULT', "*", self.n_linha, self.m_coluna))  # Operador Multiplicação
                 self.estado = 1
             elif cursor == "/":
                 self.estado = 3
@@ -140,7 +140,7 @@ class Lexer:
                 self.estado = 1
             else:
                 self.retorna_cursor()
-                self.lista_Tokens.append(Token('OP_MAI', ">", self.n_linha, self.m_coluna))  # Operador Maior
+                self.lista_Tokens.append(Token('OP_MA', ">", self.n_linha, self.m_coluna))  # Operador Maior
                 self.estado = 1
 
         # Estados que envolvem q0 -> "/"

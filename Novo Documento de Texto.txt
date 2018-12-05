@@ -6,15 +6,19 @@ Algoritmo
 	se(op = falso) inicio
 		escreva("Oi, eu sou o Goku!");
 	fim
-	senao inicio 
+	senao inicio
 		escreva("Seu inseto, achei que iria preferir o Kakaroto");
 	fim
 fim algoritmo
 
-subrotina fazNada(v1 nulo)
-	escreva("Se a rotina faz nada, por que tem um comando de impressao?");
-fim subrotina
+subrotina CmdRepita(v2 numerico)
+    se (num1 > num2) inicio
+        t <-- 5 * 6 + 8 / 2;
+    fim
+    repita
+        cmd <-- "grelhado" + t;
+    ate 8 ou 80
 
-subrotina fazNada(v1 nulo)
-	escreva("Se a rotina faz nada, por que tem um comando de impressao?");
+    j(valeska, teles, anta);
+
 fim subrotina
